@@ -1,0 +1,12 @@
+{
+  "name": "Tahor Clean CRM — Demo",
+  "short_name": "Tahor Demo",
+  "description": "Demostración interactiva del CRM Tahor Clean",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0b1220",
+  "background_color": "#fafafa",
+  "lang": "es",
+  "icons": [{ "src": "img/logo.ico", "sizes": "any", "type": "image/x-icon" }]
+}

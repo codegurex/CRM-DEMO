@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tahor Clean — CRM (Demo)</title>
+  <link rel="icon" type="image/x-icon" href="img/logo.ico" />
+  <link rel="shortcut icon" href="img/logo.ico" />
+
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Demo del CRM Tahor Clean — explora todas las funciones con datos de ejemplo." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eff6ff',100:'#dbeafe',500:'#2563eb',600:'#1d4ed8',700:'#1e40af' },
+            ink:   { 900:'#0b1220', 700:'#1f2937', 500:'#475569', 300:'#cbd5e1' },
+          },
+          boxShadow: {
+            card: '0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Banner DEMO — estático al tope, no compite con sticky del header */
+    #demo-banner {
+      background: linear-gradient(90deg, #1d4ed8, #2563eb);
+      color: #fff; padding: .5rem 1rem;
+      font-size: .8rem; text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    #demo-banner strong { font-weight: 700; }
+    #demo-banner a { color: #fff; text-decoration: underline; }
+    /* Hacer que aside (sidebar) muestre 'DEMO' debajo del logo */
+    .demo-tag {
+      display: inline-block; margin-left: .35rem;
+      font-size: .55rem; font-weight: 700;
+      background: #fef3c7; color: #92400e;
+      padding: .05rem .35rem; border-radius: .25rem;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-ink-900 antialiased locked">
+
+  <!-- Banner de demo, siempre visible cuando hay sesión -->
+  <div id="demo-banner">
+    🎬 <strong>VERSIÓN DEMO</strong> · Datos ficticios · Los cambios no se guardan al cerrar sesión
+  </div>
+
+
+  <!-- ============ LAYOUT ============ -->
+  <div class="min-h-screen flex">
+
+    <!-- Backdrop oscuro para cerrar el menú en móvil tocando fuera -->
+    <div id="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="hidden md:flex w-60 flex-col bg-white border-r border-slate-200">
+      <div class="h-16 flex items-center gap-2 px-5 border-b border-slate-200">
+        <img src="img/logo.ico" alt="Tahor Clean" class="w-8 h-8 object-contain" />
+        <div class="leading-tight">
+          <div class="font-bold">Tahor Clean</div>
+          <div class="text-xs text-ink-500">CRM Interno</div>
+        </div>
+      </div>
+      <nav class="p-3 flex-1 space-y-1 text-sm">
+        <a href="#dashboard" data-nav="dashboard" class="nav-item active">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+          Dashboard
+        </a>
+        <a href="#orders" data-nav="orders" class="nav-item">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+          Pedidos
+        </a>
+        <a href="#vendedores" data-nav="vendedores" class="nav-item">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 21a7 7 0 0114 0"/><path d="M16 11a3 3 0 100-6"/><path d="M22 21a6 6 0 00-4-5.7"/></svg>
+          Vendedores
+        </a>
+        <a href="#customers" data-nav="customers" class="nav-item">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+          Top Clientes
+        </a>
+        <a href="#products" data-nav="products" class="nav-item">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>
+          Productos
+        </a>
+      </nav>
+      <div class="p-4 border-t border-slate-200 text-xs text-ink-500">
+        <div id="rt-status" class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+          <span>Tiempo real…</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col min-w-0">
+      <!-- Topbar -->
+      <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center gap-4 sticky top-0 z-20">
+        <button id="btn-menu" class="md:hidden p-2 rounded hover:bg-slate-100" aria-label="Menu">☰</button>
+        <h1 id="page-title" class="text-lg font-semibold">Dashboard</h1>
+        <div class="flex-1"></div>
+        <div class="hidden sm:flex items-center gap-2 text-sm text-ink-500">
+          <span id="last-update">—</span>
+        </div>
+        <button id="btn-import" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-white border border-slate-200 hover:bg-slate-50" title="Importar facturas de Picking">
+          ⬆ Importar
+        </button>
+        <button id="btn-export" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-white border border-slate-200 hover:bg-slate-50">
+          ⬇ Exportar Excel
+        </button>
+        <div class="flex items-center gap-2 ml-2 pl-3 border-l border-slate-200">
+          <span id="user-email" class="hidden sm:inline text-xs text-ink-500"></span>
+          <button id="btn-logout" class="p-2 rounded-lg hover:bg-slate-100" title="Cerrar sesión">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Filters bar (always visible, applies to ALL views) -->
+      <section class="bg-white border-b border-slate-200 px-4 md:px-8 py-3 sticky top-16 z-10">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
+          <div>
+            <label class="filter-label">Desde</label>
+            <input id="f-date-from" type="date" class="filter-input" />
+          </div>
+          <div>
+            <label class="filter-label">Hasta</label>
+            <input id="f-date-to" type="date" class="filter-input" />
+          </div>
+          <div>
+            <label class="filter-label">Estado</label>
+            <select id="f-estado" class="filter-input">
+              <option value="">Todos</option>
+              <option value="en_espera">En espera</option>
+              <option value="vendido">Vendido</option>
+              <option value="no_vendido">No vendido</option>
+            </select>
+          </div>
+          <div>
+            <label class="filter-label">Vendedor</label>
+            <select id="f-vendedor" class="filter-input">
+              <option value="">Todos</option>
+              <option value="__sin__">Sin asignar</option>
+            </select>
+          </div>
+          <div>
+            <label class="filter-label">Producto</label>
+            <input id="f-producto" type="text" placeholder="Buscar producto…" class="filter-input" />
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-clear-filters" class="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 w-full">Limpiar</button>
+          </div>
+        </div>
+        <div id="quick-ranges" class="flex flex-wrap gap-2 mt-3">
+          <button data-range="today" class="chip">Hoy</button>
+          <button data-range="7d"    class="chip">7 días</button>
+          <button data-range="30d"   class="chip">30 días</button>
+          <button data-range="month" class="chip">Este mes</button>
+          <button data-range="ytd"   class="chip">Año</button>
+          <button data-range="all"   class="chip">Todo</button>
+        </div>
+      </section>
+
+      <!-- Content wrapper -->
+      <div class="p-4 md:p-8 space-y-8">
+
+        <!-- ============ DASHBOARD ============ -->
+        <section data-view="dashboard" class="space-y-6">
+
+          <!-- Alertas inteligentes -->
+          <div id="alerts-strip" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+
+          <!-- KPIs con comparativo + sparkline -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="kpi">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="kpi-label">Ventas <span class="text-ink-300 font-normal normal-case">(30d)</span></div>
+                  <div id="kpi-ventas" class="kpi-value">$0</div>
+                </div>
+                <div id="kpi-ventas-delta" class="text-xs font-semibold"></div>
+              </div>
+              <div id="kpi-ventas-sparkline" class="mt-2 -mx-1"></div>
+              <div id="kpi-ventas-sub" class="kpi-sub">—</div>
+            </div>
+            <div class="kpi">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="kpi-label">Pedidos <span class="text-ink-300 font-normal normal-case">(30d)</span></div>
+                  <div id="kpi-pedidos" class="kpi-value">0</div>
+                </div>
+                <div id="kpi-pedidos-delta" class="text-xs font-semibold"></div>
+              </div>
+              <div id="kpi-pedidos-sparkline" class="mt-2 -mx-1"></div>
+              <div id="kpi-pedidos-sub" class="kpi-sub">—</div>
+            </div>
+            <div class="kpi">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="kpi-label">Conversión</div>
+                  <div id="kpi-conversion" class="kpi-value">0%</div>
+                </div>
+                <div id="kpi-conversion-delta" class="text-xs font-semibold"></div>
+              </div>
+              <div id="kpi-conversion-sub" class="kpi-sub mt-3">vendidos / total</div>
+            </div>
+            <div class="kpi">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="kpi-label">Ticket promedio</div>
+                  <div id="kpi-ticket" class="kpi-value">$0</div>
+                </div>
+                <div id="kpi-ticket-delta" class="text-xs font-semibold"></div>
+              </div>
+              <div id="kpi-ticket-sub" class="kpi-sub mt-3">solo vendidos</div>
+            </div>
+          </div>
+
+          <!-- Proyección del mes + Meta -->
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">📅 Mes en curso</h3>
+              <button id="btn-edit-meta" class="text-xs text-brand-500 hover:underline">Editar meta</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div class="kpi-label">Ventas del mes</div>
+                <div id="proj-ventas" class="text-2xl font-bold">$0</div>
+                <div id="proj-dias" class="kpi-sub">— días transcurridos</div>
+              </div>
+              <div>
+                <div class="kpi-label">Proyección a fin de mes</div>
+                <div id="proj-estimado" class="text-2xl font-bold">$0</div>
+                <div id="proj-vs-prev" class="kpi-sub">vs mes anterior</div>
+              </div>
+              <div>
+                <div class="kpi-label">Meta del mes</div>
+                <div id="proj-meta" class="text-2xl font-bold text-ink-500">—</div>
+                <div id="proj-meta-sub" class="kpi-sub">—</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div id="proj-bar" class="h-full bg-brand-500 transition-all" style="width:0%"></div>
+              </div>
+              <div id="proj-bar-label" class="text-xs text-ink-500 mt-1.5 text-right">—</div>
+            </div>
+          </div>
+
+          <!-- Mini-rankings del mes -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="card">
+              <div class="kpi-label">🏆 Top vendedor del mes</div>
+              <div id="top-vendedor-name" class="text-lg font-bold mt-1">—</div>
+              <div id="top-vendedor-total" class="kpi-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="kpi-label">📦 Top producto del mes</div>
+              <div id="top-producto-name" class="text-lg font-bold mt-1">—</div>
+              <div id="top-producto-total" class="kpi-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="kpi-label">👤 Top cliente del mes</div>
+              <div id="top-cliente-name" class="text-lg font-bold mt-1">—</div>
+              <div id="top-cliente-total" class="kpi-sub">—</div>
+            </div>
+          </div>
+
+          <!-- Notas privadas del dueño -->
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">📝 Mis notas</h3>
+              <span class="text-xs text-ink-500">Privadas, solo se guardan en este navegador</span>
+            </div>
+            <textarea id="notas-dueno" rows="3" placeholder="Recordatorios, ideas, decisiones pendientes…"
+                      class="w-full text-sm border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-brand-500"></textarea>
+          </div>
+
+          <!-- Charts row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="card lg:col-span-2">
+              <div class="card-head">
+                <h3 class="card-title">Ventas por mes</h3>
+                <span class="text-xs text-ink-500">Últimos 12 meses</span>
+              </div>
+              <div class="h-72"><canvas id="chart-line"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">Ventas por vendedor</h3>
+              </div>
+              <div class="h-72"><canvas id="chart-vendedor"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">Top productos (unidades)</h3>
+              </div>
+              <div class="h-72"><canvas id="chart-products"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">Top productos (ingreso)</h3>
+              </div>
+              <div class="h-72"><canvas id="chart-products-revenue"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ ORDERS ============ -->
+        <section data-view="orders" class="hidden space-y-4">
+          <div class="card p-0">
+            <div class="p-4 flex flex-wrap items-center gap-2 border-b border-slate-200">
+              <input id="orders-search" placeholder="Buscar por cliente, teléfono o producto…" class="filter-input flex-1 min-w-64" />
+              <span id="orders-count" class="text-sm text-ink-500">0 pedidos</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-ink-500 uppercase text-xs tracking-wide">
+                  <tr>
+                    <th class="th">Fecha</th>
+                    <th class="th">Cliente</th>
+                    <th class="th">Teléfono</th>
+                    <th class="th">Productos</th>
+                    <th class="th text-right">Total</th>
+                    <th class="th">Vendedor</th>
+                    <th class="th">Estado</th>
+                    <th class="th text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-tbody"></tbody>
+              </table>
+            </div>
+            <div id="orders-empty" class="hidden p-8 text-center text-ink-500">Sin pedidos para los filtros aplicados.</div>
+          </div>
+        </section>
+
+        <!-- ============ VENDEDORES ============ -->
+        <section data-view="vendedores" class="hidden space-y-4">
+          <div id="vendedores-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+          <div class="card">
+            <div class="card-head"><h3 class="card-title">Comparativa por vendedor</h3></div>
+            <div class="h-80"><canvas id="chart-vendedores-compare"></canvas></div>
+          </div>
+        </section>
+
+        <!-- ============ CUSTOMERS ============ -->
+        <section data-view="customers" class="hidden space-y-4">
+          <div class="card p-0">
+            <div class="card-head px-4"><h3 class="card-title">Top 10 clientes (por ingreso)</h3></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-ink-500 uppercase text-xs">
+                  <tr>
+                    <th class="th">#</th><th class="th">Cliente</th><th class="th">Teléfono</th>
+                    <th class="th text-right">Pedidos</th><th class="th text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ PRODUCTS ============ -->
+        <section data-view="products" class="hidden space-y-4">
+          <div class="card p-0">
+            <div class="card-head px-4"><h3 class="card-title">Productos — ingresos y unidades</h3></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-ink-500 uppercase text-xs">
+                  <tr>
+                    <th class="th">Producto</th>
+                    <th class="th text-right">Unidades</th>
+                    <th class="th text-right">Ingreso</th>
+                    <th class="th text-right">Pedidos</th>
+                  </tr>
+                </thead>
+                <tbody id="products-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ EDIT ORDER MODAL ============ -->
+  <div id="modal" class="hidden fixed inset-0 z-50 bg-black/40 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200">
+        <h3 class="font-semibold">Editar pedido <span id="modal-pedido-id" class="text-ink-500 text-sm font-normal"></span></h3>
+        <button id="modal-close" class="p-1 rounded hover:bg-slate-100">✕</button>
+      </div>
+      <div class="p-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="filter-label">Estado</label>
+            <select id="m-estado" class="filter-input">
+              <option value="en_espera">En espera</option>
+              <option value="vendido">Vendido</option>
+              <option value="no_vendido">No vendido</option>
+            </select>
+          </div>
+          <div>
+            <label class="filter-label">Vendedor</label>
+            <input id="m-vendedor" type="text" class="filter-input" disabled
+                   placeholder="Se asigna desde Picking al facturar" />
+          </div>
+          <div>
+            <label class="filter-label">Total</label>
+            <input id="m-total" type="number" step="0.01" class="filter-input" />
+          </div>
+          <div>
+            <label class="filter-label">Cliente</label>
+            <input id="m-cliente" type="text" class="filter-input" disabled />
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-medium mb-2">Detalle</div>
+          <div id="m-detalle" class="border border-slate-200 rounded-lg divide-y divide-slate-100 text-sm"></div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-slate-200 bg-slate-50">
+        <button id="modal-cancel" class="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-100">Cancelar</button>
+        <button id="modal-save" class="px-3 py-2 text-sm rounded-lg bg-brand-500 hover:bg-brand-600 text-white">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 z-50 bg-ink-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm"></div>
+
+  <!-- App -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
